@@ -1,26 +1,36 @@
 package es.antonborri.home_widget
 
+import android.app.Activity
 import android.appwidget.AppWidgetManager
-import android.content.ComponentName
-import android.content.Context
-import android.content.Intent
-import android.content.SharedPreferences
+import android.content.*
 import androidx.annotation.NonNull
 import io.flutter.embedding.engine.plugins.FlutterPlugin
+import io.flutter.embedding.engine.plugins.activity.ActivityAware
+import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
+import io.flutter.plugin.common.EventChannel
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry
 
 
 /** HomeWidgetPlugin */
-class HomeWidgetPlugin : FlutterPlugin, MethodCallHandler {
+class HomeWidgetPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
+        EventChannel.StreamHandler, PluginRegistry.NewIntentListener {
     private lateinit var channel: MethodChannel
+    private lateinit var eventChannel: EventChannel
     private lateinit var context: Context
+
+    private var activity: Activity? = null
+    private var receiver: BroadcastReceiver? = null
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "home_widget")
         channel.setMethodCallHandler(this)
+
+        eventChannel = EventChannel(flutterPluginBinding.binaryMessenger, "home_widget/updates")
+        eventChannel.setStreamHandler(this)
         context = flutterPluginBinding.applicationContext
     }
 
@@ -61,7 +71,7 @@ class HomeWidgetPlugin : FlutterPlugin, MethodCallHandler {
             "updateWidget" -> {
                 val className = call.argument<String>("android") ?: call.argument<String>("name")
                 try {
-                    val javaClass = Class.forName("${context.getPackageName()}.${className}")
+                    val javaClass = Class.forName("${context.packageName}.${className}")
                     val intent = Intent(context, javaClass)
                     intent.action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
                     val ids: IntArray = AppWidgetManager.getInstance(context.applicationContext).getAppWidgetIds(ComponentName(context, javaClass))
@@ -73,6 +83,13 @@ class HomeWidgetPlugin : FlutterPlugin, MethodCallHandler {
             }
             "setAppGroupId" -> {
                 result.success(true)
+            }
+            "initiallyLaunchedFromHomeWidget" -> {
+                return if (activity?.intent?.action?.equals(HomeWidgetLaunchIntent.HOME_WIDGET_LAUNCH_ACTION) == true) {
+                    result.success(activity?.intent?.data?.toString() ?: true)
+                } else {
+                    result.success(null)
+                }
             }
             else -> {
                 result.notImplemented()
@@ -88,5 +105,49 @@ class HomeWidgetPlugin : FlutterPlugin, MethodCallHandler {
         private const val PREFERENCES = "HomeWidgetPreferences"
 
         fun getData(context: Context): SharedPreferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
+    }
+
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        activity = binding.activity
+        binding.addOnNewIntentListener(this)
+    }
+
+    override fun onDetachedFromActivityForConfigChanges() {
+        context.unregisterReceiver(receiver)
+        activity = null
+    }
+
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        activity = binding.activity
+        binding.addOnNewIntentListener(this)
+    }
+
+    override fun onDetachedFromActivity() {
+        context.unregisterReceiver(receiver)
+        activity = null
+    }
+
+    override fun onListen(arguments: Any?, events: EventChannel.EventSink?) {
+        receiver = createReceiver(events)
+    }
+
+    override fun onCancel(arguments: Any?) {
+        receiver = null
+    }
+
+    private fun createReceiver(events: EventChannel.EventSink?): BroadcastReceiver {
+        return object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                if (intent?.action.equals(HomeWidgetLaunchIntent.HOME_WIDGET_LAUNCH_ACTION)) {
+                    events?.success(intent?.data?.toString() ?: true)
+                }
+            }
+
+        }
+    }
+
+    override fun onNewIntent(intent: Intent?): Boolean {
+        receiver?.onReceive(context, intent)
+        return receiver != null
     }
 }

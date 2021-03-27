@@ -140,7 +140,29 @@ Please follow the Setup Instructions for flutter_workmanager (or your preferred 
 In case of flutter_workmanager this achieved by adding:
 ```swift
 WorkmanagerPlugin.setPluginRegistrantCallback { registry in
-        GeneratedPluginRegistrant.register(with: registry)
-    }
+    GeneratedPluginRegistrant.register(with: registry)
+}
 ```
 to [AppDelegate.swift](example/ios/Runner/AppDelegate.swift)
+
+### Clicking
+To detect if the App was initially started by clicking the Widget you can call `HomeWidget.initiallyLaunchedFromHomeWidget()` if the App was already running in the Background you can receive these Events by listening to `HomeWidget.widgetClicked`. Both methods will provide Uris so you can easily send back data from the Widget to the App to for example navigate to a content page.
+
+In order for these methods to work you need to follow these steps:
+
+#### Android
+Add an `IntentFilter` to the `Activity` Section in your `AndroidManifest`
+```
+<intent-filter>
+    <action android:name="es.antonborri.home_widget.action.LAUNCH" />
+</intent-filter>
+```
+
+In your WidgetProvider add a PendingIntent to your View using `HomeWidgetLaunchIntent.getActivity`
+```kotlin
+val pendingIntentWithData = HomeWidgetLaunchIntent.getActivity(
+        context,
+        MainActivity::class.java,
+        Uri.parse("homeWidgetExample://message?message=$message"))
+setOnClickPendingIntent(R.id.widget_message, pendingIntentWithData)
+```

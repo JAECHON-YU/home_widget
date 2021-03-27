@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class HomeWidget {
   static const MethodChannel _channel = MethodChannel('home_widget');
+  static const EventChannel _eventChannel = EventChannel('home_widget/updates');
 
   /// Save [data] to the Widget Storage
   ///
@@ -48,5 +50,30 @@ class HomeWidget {
   /// communication between the App and the Widget Extension
   static Future<bool?> setAppGroupId(String groupId) {
     return _channel.invokeMethod('setAppGroupId', {'groupId': groupId});
+  }
+
+  /// Checks if the App was initially launched via the Widget
+  static Future<Uri?> initiallyLaunchedFromHomeWidget() {
+    return _channel.invokeMethod<String>('initiallyLaunchedFromHomeWidget').then(_handleReceivedData);
+  }
+
+  /// Receives Updates if App Launched via the Widget
+  static Stream<Uri?> get widgetClicked {
+    return _eventChannel.receiveBroadcastStream().map<Uri?>(_handleReceivedData);
+  }
+
+  static Uri? _handleReceivedData(dynamic? value) {
+    if(value != null) {
+      if(value is String) {
+        try {
+          return Uri.parse(value);
+        } on FormatException {
+          debugPrint('Received Data($value) is not parsebale into an Uri');
+        }
+      }
+      return Uri();
+    } else {
+      return null;
+    }
   }
 }
