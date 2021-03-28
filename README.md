@@ -150,6 +150,15 @@ To detect if the App was initially started by clicking the Widget you can call `
 
 In order for these methods to work you need to follow these steps:
 
+#### iOS
+Add `.widgetUrl` to your WidgetComponent
+```swift
+Text(entry.message)
+    .font(.body)
+    .widgetURL(URL(string: "homeWidgetExample://message?message=\(entry.message)&homeWidget"))
+```
+In order to only detect Widget Links you need to add the queryParameter`homeWidget` to the URL
+
 #### Android
 Add an `IntentFilter` to the `Activity` Section in your `AndroidManifest`
 ```
