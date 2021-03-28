@@ -42,7 +42,8 @@ struct HomeWidgetExampleEntryView : View {
     var body: some View {
         VStack.init(alignment: .leading, spacing: /*@START_MENU_TOKEN@*/nil/*@END_MENU_TOKEN@*/, content: {
             Text(entry.title).bold().font(/*@START_MENU_TOKEN@*/.title/*@END_MENU_TOKEN@*/)
-            Text(entry.message).font(.body).widgetURL(URL(string: "homeWidgetExample://message?message=\(entry.message)"))
+            Text(entry.message).font(.body)
+                .widgetURL(URL(string: "homeWidgetExample://message?message=\(entry.message)&homeWidget=true"))
         }
         )
     }

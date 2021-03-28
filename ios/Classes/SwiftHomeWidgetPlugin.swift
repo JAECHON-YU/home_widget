@@ -119,14 +119,24 @@ public class SwiftHomeWidgetPlugin: NSObject, FlutterPlugin, FlutterStreamHandle
 
     
     public func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [AnyHashable : Any] = [:]) -> Bool {
-        let launchUrl = launchOptions[UIApplication.LaunchOptionsKey.url] as? NSURL
-        initialUrl = launchUrl?.absoluteURL
-        latestUrl = initialUrl
+        let launchUrl = (launchOptions[UIApplication.LaunchOptionsKey.url] as? NSURL)?.absoluteURL
+        if(launchUrl != nil && isWidgetUrl(url: launchUrl!)) {
+            initialUrl = launchUrl?.absoluteURL
+            latestUrl = initialUrl
+        }
         return true
     }
     
     public func application(_ application: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
-        latestUrl = url
+        if(isWidgetUrl(url: url)) {
+            latestUrl = url
+        }
         return true
+    }
+    
+    private func isWidgetUrl(url: URL) -> Bool {
+        let components = URLComponents.init(url: url, resolvingAgainstBaseURL: false)
+        return components?.queryItems?.contains(where: {(item) in item.name == "homeWidget" && item.value == "true"}) ?? false
+    
     }
 }
