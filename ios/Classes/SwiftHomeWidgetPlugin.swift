@@ -136,7 +136,7 @@ public class SwiftHomeWidgetPlugin: NSObject, FlutterPlugin, FlutterStreamHandle
     
     private func isWidgetUrl(url: URL) -> Bool {
         let components = URLComponents.init(url: url, resolvingAgainstBaseURL: false)
-        return components?.queryItems?.contains(where: {(item) in item.name == "homeWidget" && item.value == "true"}) ?? false
+        return components?.queryItems?.contains(where: {(item) in item.name == "homeWidget"}) ?? false
     
     }
 }
