@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -30,6 +31,20 @@ void callbackDispatcher() {
   });
 }
 
+/// Called when Doing Background Work initiated from Widget
+void backgroundCallback(Uri data) async {
+  print(data);
+
+  if(data.host == 'titleclicked') {
+    final greetings = ['Hello', 'Hallo', 'Bonjour', 'Hola', 'Ciao', '哈洛', '안녕하세요', 'xin chào'];
+    final selectedGreeting = greetings[Random().nextInt(greetings.length)];
+
+    await HomeWidget.saveWidgetData<String>('title', selectedGreeting);
+    await HomeWidget.updateWidget(
+        name: 'HomeWidgetExampleProvider', iOSName: 'HomeWidgetExample');
+  }
+}
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   Workmanager.initialize(callbackDispatcher, isInDebugMode: kDebugMode);
@@ -49,6 +64,7 @@ class _MyAppState extends State<MyApp> {
   void initState() {
     super.initState();
     HomeWidget.setAppGroupId('YOUR_GROUP_ID');
+    HomeWidget.registerBackgroundCallback(backgroundCallback);
   }
 
   @override
