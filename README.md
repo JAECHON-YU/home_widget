@@ -175,3 +175,41 @@ val pendingIntentWithData = HomeWidgetLaunchIntent.getActivity(
         Uri.parse("homeWidgetExample://message?message=$message"))
 setOnClickPendingIntent(R.id.widget_message, pendingIntentWithData)
 ```
+
+### Background Click
+
+Android allows interactive elements in HomeScreenWidgets. This allows to for example add a refresh button on a widget.
+With home_widget you can use this by following these steps:
+
+#### Android/Native Part
+1. Add the necessary Receiver and Service to you `AndroidManifest.xml` file
+    ```
+   <receiver android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver">
+        <intent-filter>
+            <action android:name="es.antonborri.home_widget.action.BACKGROUND" />
+        </intent-filter>
+    </receiver>
+    <service android:name="es.antonborri.home_widget.HomeWidgetBackgroundService"
+        android:permission="android.permission.BIND_JOB_SERVICE" android:exported="true"/>
+   ```
+2. Add a `HomeWidgetBackgroundIntent.getBroadcast` PendingIntent to the View you want to add a click listener to
+    ```kotlin
+    val backgroundIntent = HomeWidgetBackgroundIntent.getBroadcast(
+        context,
+        Uri.parse("homeWidgetExample://titleClicked")
+    )
+    setOnClickPendingIntent(R.id.widget_title, backgroundIntent)
+    ```
+
+#### Dart
+4. Write a **static** function that takes a Uri as an argument. This will get called when a user clicks on the View
+    ```dart
+    void backgroundCallback(Uri data) {
+      // do something with data
+      ...
+    }
+    ```
+5. Register the callback function by calling
+    ```dart
+    HomeWidget.registerBackgroundCallback(backgroundCallback);
+    ```
