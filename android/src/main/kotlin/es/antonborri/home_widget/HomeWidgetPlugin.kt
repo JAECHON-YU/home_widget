@@ -91,6 +91,12 @@ class HomeWidgetPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
                     result.success(null)
                 }
             }
+            "registerBackgroundCallback" -> {
+                val dispatcher = (call.arguments as Iterable<*>).toList()[0] as Long
+                val callback = (call.arguments as Iterable<*>).toList()[1] as Long
+                saveCallbackHandle(context, dispatcher, callback)
+                return result.success(true)
+            }
             else -> {
                 result.notImplemented()
             }
@@ -103,6 +109,24 @@ class HomeWidgetPlugin : FlutterPlugin, MethodCallHandler, ActivityAware,
 
     companion object {
         private const val PREFERENCES = "HomeWidgetPreferences"
+
+        private const val INTERNAL_PREFERENCES = "InternalHomeWidgetPreferences"
+        private const val CALLBACK_DISPATCHER_HANDLE = "callbackDispatcherHandle"
+        private const val CALLBACK_HANDLE = "callbackHandle"
+
+        private fun saveCallbackHandle(context: Context, dispatcher: Long, handle: Long) {
+            context.getSharedPreferences(INTERNAL_PREFERENCES, Context.MODE_PRIVATE)
+                    .edit()
+                    .putLong(CALLBACK_DISPATCHER_HANDLE, dispatcher)
+                    .putLong(CALLBACK_HANDLE, handle)
+                    .apply()
+        }
+
+        fun getDispatcherHandle(context: Context): Long =
+                context.getSharedPreferences(INTERNAL_PREFERENCES, Context.MODE_PRIVATE).getLong(CALLBACK_DISPATCHER_HANDLE, 0)
+
+        fun getHandle(context: Context): Long =
+                context.getSharedPreferences(INTERNAL_PREFERENCES, Context.MODE_PRIVATE).getLong(CALLBACK_HANDLE, 0)
 
         fun getData(context: Context): SharedPreferences = context.getSharedPreferences(PREFERENCES, Context.MODE_PRIVATE)
     }

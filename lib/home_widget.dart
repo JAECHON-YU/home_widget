@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:home_widget/home_widget_callback_dispatcher.dart';
 
+/// A Flutter Plugin to simplify setting up and communicating with HomeScreenWidgets
 class HomeWidget {
   static const MethodChannel _channel = MethodChannel('home_widget');
   static const EventChannel _eventChannel = EventChannel('home_widget/updates');
@@ -75,5 +78,16 @@ class HomeWidget {
     } else {
       return null;
     }
+  }
+
+  /// Register a callback that gets called when clicked on a specific View in a HomeWidget
+  /// supported only on Android
+  /// More Info on setting this up in the README
+  static Future<bool?> registerBackgroundCallback(Function(Uri?) callback) {
+    final args = <dynamic>[
+      PluginUtilities.getCallbackHandle(callbackDispatcher)?.toRawHandle(),
+      PluginUtilities.getCallbackHandle(callback)?.toRawHandle()
+    ];
+    return _channel.invokeMethod('registerBackgroundCallback', args);
   }
 }
