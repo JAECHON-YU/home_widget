@@ -35,8 +35,17 @@ void callbackDispatcher() {
 void backgroundCallback(Uri data) async {
   print(data);
 
-  if(data.host == 'titleclicked') {
-    final greetings = ['Hello', 'Hallo', 'Bonjour', 'Hola', 'Ciao', '哈洛', '안녕하세요', 'xin chào'];
+  if (data.host == 'titleclicked') {
+    final greetings = [
+      'Hello',
+      'Hallo',
+      'Bonjour',
+      'Hola',
+      'Ciao',
+      '哈洛',
+      '안녕하세요',
+      'xin chào'
+    ];
     final selectedGreeting = greetings[Random().nextInt(greetings.length)];
 
     await HomeWidget.saveWidgetData<String>('title', selectedGreeting);
@@ -125,11 +134,10 @@ class _MyAppState extends State<MyApp> {
   }
 
   void _launchedFromWidget(Uri uri) {
-    if(uri != null) {
+    if (uri != null) {
       showDialog(
           context: context,
-          builder: (buildContext) =>
-              AlertDialog(
+          builder: (buildContext) => AlertDialog(
                 title: Text('App started from HomeScreenWidget'),
                 content: Text('Here is the URI: $uri'),
               ));
