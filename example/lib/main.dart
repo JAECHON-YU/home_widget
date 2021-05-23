@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -8,9 +9,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:home_widget_example/coin_value.dart';
+import 'package:home_widget_example/coin_web_socket.dart';
 import 'package:workmanager/workmanager.dart';
 import 'coin_value.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter/foundation.dart';
+import 'package:web_socket_channel/io.dart';
+import 'package:flutter/material.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// Used for Background Updates using Workmanager Plugin
 void callbackDispatcher() {
@@ -77,10 +83,17 @@ void backgroundCallback(Uri data) async {
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   Workmanager.initialize(callbackDispatcher, isInDebugMode: kDebugMode);
-  runApp(MaterialApp(home: MyApp()));
+  runApp(MaterialApp(home: MyApp(title: 'Coin',
+    channel: IOWebSocketChannel.connect('wss://pubwss.bithumb.com/pub/ws'))));
 }
 
 class MyApp extends StatefulWidget {
+  final String title;
+  final WebSocketChannel channel;
+
+  // ignore: public_member_api_docs
+  MyApp({ Key key,  this.title,  this.channel})
+      : super(key: key);
   @override
   _MyAppState createState() => _MyAppState();
 }
@@ -88,11 +101,12 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _controller = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    HomeWidget.setAppGroupId('YOUR_GROUP_ID');
+    HomeWidget.setAppGroupId("group.teamhj.homeWidgetExample");
     HomeWidget.registerBackgroundCallback(backgroundCallback);
   }
 
@@ -108,6 +122,29 @@ class _MyAppState extends State<MyApp> {
     _titleController.dispose();
     _messageController.dispose();
     super.dispose();
+  }
+
+  void _sendMessage() {
+
+    var ticker = {
+      "type": "ticker",
+      "symbols": ["BTC_KRW"],
+      "tickTypes": ["30M"]
+    };
+    var orderbookdepth =
+    {"type":"orderbookdepth", "symbols":["BTC_KRW" , "ETH_KRW"]};
+
+    var tansactions =
+    {"type":"transaction", "symbols":["BTC_KRW" , "ETH_KRW"]};
+
+    var jsonString = json.encode(ticker);
+    widget.channel.sink.add(jsonString);
+    /*
+    if (_controller.text.isNotEmpty) {
+      widget.channel.sink.add(_controller.text);
+    }
+
+     */
   }
 
   Future<void> _sendData() async {
@@ -179,6 +216,11 @@ class _MyAppState extends State<MyApp> {
       appBar: AppBar(
         title: const Text('HomeWidget Example'),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _sendMessage,
+        tooltip: 'Send message',
+        child: Icon(Icons.send),
+      ),
       body: Center(
         child: Column(
           children: [
@@ -215,7 +257,25 @@ class _MyAppState extends State<MyApp> {
               ElevatedButton(
                 onPressed: _stopBackgroundUpdate,
                 child: Text('Stop updating in background'),
-              )
+              ),
+            Form(
+              child: TextFormField(
+                controller: _controller,
+                decoration: InputDecoration(labelText: 'Send a message'),
+              ),
+            ),
+            StreamBuilder(
+              stream: widget.channel.stream,
+              builder: (context, snapshot) {
+
+                //var cointicker1 = CoinWebSocket.fromJson(snapshot.data);
+                var cointicker = json.decode(snapshot.data);
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 24.0),
+                  child: Text(snapshot.hasData ? '${snapshot.data}' : ''),
+                );
+              },
+            )
           ],
         ),
       ),
