@@ -103,11 +103,15 @@ class _MyAppState extends State<MyApp> {
   final TextEditingController _messageController = TextEditingController();
   final TextEditingController _controller = TextEditingController();
 
+  var oldBTC = CoinWebSocket();
+  var oldETH = CoinWebSocket();
+
   @override
   void initState() {
     super.initState();
     HomeWidget.setAppGroupId("group.teamhj.homeWidgetExample");
     HomeWidget.registerBackgroundCallback(backgroundCallback);
+    _sendMessage();
   }
 
   @override
@@ -128,7 +132,7 @@ class _MyAppState extends State<MyApp> {
 
     var ticker = {
       "type": "ticker",
-      "symbols": ["BTC_KRW"],
+      "symbols": ["BTC_KRW" , "ETH_KRW"],
       "tickTypes": ["30M"]
     };
     var orderbookdepth =
@@ -268,11 +272,45 @@ class _MyAppState extends State<MyApp> {
               stream: widget.channel.stream,
               builder: (context, snapshot) {
 
-                //var cointicker1 = CoinWebSocket.fromJson(snapshot.data);
                 var cointicker = json.decode(snapshot.data);
+                var cointicker1 = CoinWebSocket.fromJson(cointicker);
+
+                if (cointicker1.content.symbol=="BTC_KRW") {
+                  oldBTC = cointicker1;
+                }
+                if (cointicker1.content.symbol=="ETH_KRW") {
+                  oldETH = cointicker1;
+                }
+
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 24.0),
-                  child: Text(snapshot.hasData ? '${snapshot.data}' : ''),
+                  child:
+                  Column(
+                    children: [
+
+                      Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Image.asset('images/btc.png',width: 25, height: 25,),
+                          Text(oldBTC.content.highPrice),
+                          Text(oldBTC.content.lowPrice),
+                          Text(oldBTC.content.chgRate+'%'),
+
+
+                    ]),
+                      SizedBox(height: 10,),
+                      Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Image.asset('images/eth.png',width: 25, height: 25,),
+                            Text(oldETH.content.highPrice),
+                            Text(oldETH.content.lowPrice),
+                            Text(oldETH.content.chgRate+'%'),
+
+
+                          ]),
+                  ]
+                  ),
                 );
               },
             )
